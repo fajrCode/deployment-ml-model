@@ -1,9 +1,11 @@
 import os
 from flask import Flask, jsonify,request
+import requests as req
 from werkzeug.utils import secure_filename #for secure name file like "this file.js" to "this-file.js"
 from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
+from io import BytesIO
 
 app = Flask(__name__)
 #config extention allow
@@ -37,14 +39,17 @@ def index():
 def prediction():
     if request.method == "POST":
         #client send file with key "image"
-        image = request.files["image"]
-        if image and allowed_file(image.filename):
+        # image = request.files["image"]
+        data = request.get_json()
+        image = data["image"]
+        if image:
             #save input image
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            # filename = secure_filename(image.filename)
+            # image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            # image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             #pre-processsing input image
-            img = Image.open(image_path).convert("RGB")
+            response = req.get(image)
+            img = Image.open(BytesIO(response.content)).convert("RGB")
             img = img.resize((224,224))
             img_array = np.asarray(img)
             img_array = np.expand_dims(img_array,axis = 0)
