@@ -1,18 +1,20 @@
 from flask import Flask, jsonify,request
 from werkzeug.utils import secure_filename #for secure name file like "this file.js" to "this-file.js"
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
 
 
 app = Flask(__name__)
 #config extention allow
-app.config["ALLOWED_EXTENTIONS"] = ser(["png","jpg","jpeg"])
+app.config["ALLOWED_EXTENTIONS"] = set(["png","jpg","jpeg"])
 
 #function to check file we get
 def allowed_file(filename):
     return "." in filename and \
         filename.split(".", 1)[1] in app.config["ALLOWED_EXTENTIONS"]
 
-model = load_model("soil_types_model.h5", compile=False)
+#load model
+# model = load_model("soil_types_model.h5", compile=False)
+#read labels.txt
 with open("labels.txt", "r") as file:
     labels= file.read().splitlines()
 
@@ -35,8 +37,10 @@ def prediction():
     if request.method == "POST":
         #client send file with key "image"
         image = request.files["image"]
-        if image:
-            pass
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            image.save("static/uploads/", filename)
+            return "Saved"
         else:
             return jsonify({
             "status":{
